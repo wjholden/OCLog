@@ -40,12 +40,12 @@ atexit(() -> DBInterface.close!(insert_statement))
 atexit(() -> println("Shutting down log collector."))
 
 # Read messages as they come in and commit them to the database.
-for _ in 1:10
+while true
     bmessage = recv(socket)
     Char(last(bmessage)) != '\n' && println(stderr, "This log message should have ended in a newline (actual byte read is $(last(bmessage)))")
     pri = bmessage[1:5]
     message = String(bmessage[6:end-1])
-    println(message)
+    #println(message)
     DBInterface.execute(insert_statement, (message,))
 end
 
