@@ -25,13 +25,13 @@ atexit(() -> close(db)) # Close the database when the program terminates.
 socket = Sockets.UDPSocket()
 address = ip"0.0.0.0"
 port = 514
-group = ip"239.5.1.4"
+###group = ip"239.5.1.4"
 bind(socket, address, port)
-join_multicast_group(socket, group)
+###join_multicast_group(socket, group)
 # Close the socket and leave the multicast group upon closure.
 # Note that these are in reverse order due to the LIFO semantics of atexit.
 atexit(() -> close(socket))
-atexit(() -> leave_multicast_group(socket, group))
+###atexit(() -> leave_multicast_group(socket, group))
 
 # We are now ready to actually receive the logs.
 # First, we need a prepared statement that we will use to safely insert values.
