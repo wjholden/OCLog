@@ -24,9 +24,9 @@ atexit(() -> close(db)) # Close the database when the program terminates.
 # Open the UDP socket to receive logs.
 socket = Sockets.UDPSocket()
 address = ip"0.0.0.0"
-port = 514 # Remember that Linux needs root to open ports <1024.
+port = 5140 # Remember that Linux needs root to open ports <1024.
 group = ip"239.5.1.4"
-bind(socket, address, port)
+bind(socket, address, port) || throw("Failed to open port $(port)")
 join_multicast_group(socket, group)
 # Close the socket and leave the multicast group upon closure.
 # Note that these are in reverse order due to the LIFO semantics of atexit.
