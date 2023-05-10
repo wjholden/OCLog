@@ -6,6 +6,8 @@ using SQLite
 using DataFrames
 using Sockets
 
+println("Starting log collector...")
+
 # Open the SQLite database that we will use to store Syslog messages.
 # If it does not exist, then create it.
 db = SQLite.DB("syslog.db")
@@ -35,7 +37,7 @@ atexit(() -> leave_multicast_group(socket, group))
 # First, we need a prepared statement that we will use to safely insert values.
 insert_statement = SQLite.Stmt(db, "INSERT INTO Logs (Message) VALUES (?)")
 atexit(() -> DBInterface.close!(insert_statement))
-atexit(() -> println("Shutting down logging app."))
+atexit(() -> println("Shutting down log collector."))
 
 # Read messages as they come in and commit them to the database.
 for _ in 1:10
