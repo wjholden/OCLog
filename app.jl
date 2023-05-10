@@ -46,6 +46,7 @@ atexit(() -> println("Shutting down log collector."))
 # Read messages as they come in and commit them to the database.
 while true
     bmessage = recv(socket)
+    isempty(bmessage) && break
     Char(last(bmessage)) != '\n' && println(stderr, "This log message should have ended in a newline (actual byte read is $(last(bmessage)))")
     pri = bmessage[1:5] # Look in the RFC for what this means. For me, I don't need it.
     message = String(bmessage[6:end-1])
