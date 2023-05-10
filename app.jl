@@ -54,7 +54,7 @@ route("/json") do
     DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame |> json
 end
 
-up(8888)
+up(8888, "0.0.0.0")
 atexit(down)
 
 # Read messages as they come in and commit them to the database.
