@@ -7,6 +7,7 @@ using SQLite
 using Sockets
 
 println("Starting log collector...")
+atexit(() -> println("Log collector fully shutdown."))
 
 # Open the SQLite database that we will use to store Syslog messages.
 # If it does not exist, then create it.
@@ -19,8 +20,7 @@ CREATE TABLE IF NOT EXISTS Logs
     Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
 )
 """)
-closeDatabase() = close(db)
-atexit(closeDatabase) # Close the database when the program terminates.
+atexit(() -> close(db)) # Close the database when the program terminates.
 
 # Open the UDP socket to receive logs.
 socket = Sockets.UDPSocket()
@@ -32,21 +32,19 @@ join_multicast_group(socket, group)
 # Close the socket and leave the multicast group upon closure.
 # Note that these are in reverse order due to the LIFO semantics of atexit.
 # You might ask, why aren't these anonymous lambdas? The reason is debugging.
-closeSocket() = close(socket)
-atexit(closeSocket)
-leaveMulticastGroup() = leave_multicast_group(socket, group)
-atexit(leaveMulticastGroup)
+atexit(() -> close(socket))
+atexit(() -> leave_multicast_group(socket, group))
 
 # We are now ready to actually receive the logs.
 # First, we need a prepared statement that we will use to safely insert values.
 insert_statement = SQLite.Stmt(db, "INSERT INTO Logs (Message) VALUES (?)")
-#atexit(() -> DBInterface.close!(insert_statement))
+atexit(() -> DBInterface.close!(insert_statement))
 atexit(() -> println("Shutting down log collector."))
 
 # Read messages as they come in and commit them to the database.
 while true
     bmessage = recv(socket)
-    isempty(bmessage) && break
+    #isempty(bmessage) && break
     Char(last(bmessage)) != '\n' && println(stderr, "This log message should have ended in a newline (actual byte read is $(last(bmessage)))")
     pri = bmessage[1:5] # Look in the RFC for what this means. For me, I don't need it.
     message = String(bmessage[6:end-1])
@@ -54,6 +52,6 @@ while true
     DBInterface.execute(insert_statement, (message,))
 end
 
-# DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame |> println
+#DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame |> println
 
 end # module
