@@ -41,12 +41,13 @@ insert_statement = SQLite.Stmt(db, "INSERT INTO Logs (Message) VALUES (?)")
 atexit(() -> DBInterface.close!(insert_statement))
 atexit(() -> println("Shutting down log collector."))
 
-route("/test") do
-    "Genie is running"
+route("/") do
+    "Genie is running. See /txt and /json."
 end
 
-route("/db") do
-    DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame
+route("/txt") do
+    df = DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame
+    join(df.Message, "\n")
 end
 
 using Genie.Renderer.Json
