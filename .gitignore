@@ -25,3 +25,4 @@ Manifest.toml
 
 # Don't backup SQLite databases.
 *.db
+*.db
