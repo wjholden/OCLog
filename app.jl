@@ -3,8 +3,9 @@ module OCLog
 #using JSON3
 #using Pipe: @pipe
 using SQLite
-#using DataFrames
+using DataFrames
 using Sockets
+using Genie
 
 println("Starting log collector...")
 atexit(() -> println("Log collector fully shutdown."))
@@ -24,14 +25,13 @@ atexit(() -> close(db)) # Close the database when the program terminates.
 
 # Open the UDP socket to receive logs.
 socket = Sockets.UDPSocket()
-address = ip"0.0.0.0"
+local_address = ip"0.0.0.0"
 port = 5140 # Remember that Linux needs root to open ports <1024.
 group = ip"239.5.1.4"
-bind(socket, address, port) || throw("Failed to open port $(port)")
+bind(socket, local_address, port) || throw("Failed to open port $(port)")
 join_multicast_group(socket, group)
 # Close the socket and leave the multicast group upon closure.
 # Note that these are in reverse order due to the LIFO semantics of atexit.
-# You might ask, why aren't these anonymous lambdas? The reason is debugging.
 atexit(() -> close(socket))
 atexit(() -> leave_multicast_group(socket, group))
 
@@ -40,6 +40,22 @@ atexit(() -> leave_multicast_group(socket, group))
 insert_statement = SQLite.Stmt(db, "INSERT INTO Logs (Message) VALUES (?)")
 atexit(() -> DBInterface.close!(insert_statement))
 atexit(() -> println("Shutting down log collector."))
+
+route("/test") do
+    "Genie is running"
+end
+
+route("/db") do
+    DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame
+end
+
+using Genie.Renderer.Json
+route("/json") do
+    DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame |> json
+end
+
+up(8888)
+atexit(down)
 
 # Read messages as they come in and commit them to the database.
 while true
@@ -51,7 +67,5 @@ while true
     #println(message)
     DBInterface.execute(insert_statement, (message,))
 end
-
-#DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame |> println
 
 end # module
