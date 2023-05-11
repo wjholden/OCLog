@@ -47,7 +47,7 @@ end
 
 route("/txt") do
     df = DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame
-    join(df.Message, "\n")
+    respond(join(df.Message, "\n"), :text)
 end
 
 using Genie.Renderer.Json
