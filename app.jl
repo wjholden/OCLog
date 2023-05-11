@@ -7,6 +7,10 @@ using DataFrames
 using Sockets
 using Genie
 
+# The IP address you want to bind on can be specified as the first argument,
+# otherwise it will default to all interfaces.
+local_address = isempty(ARGS) ? ip"0.0.0.0" : IPv4(first(ARGS))
+
 println("Starting log collector...")
 atexit(() -> println("Log collector fully shutdown."))
 
@@ -25,7 +29,6 @@ atexit(() -> close(db)) # Close the database when the program terminates.
 
 # Open the UDP socket to receive logs.
 socket = Sockets.UDPSocket()
-local_address = ip"0.0.0.0"
 port = 5140 # Remember that Linux needs root to open ports <1024.
 group = ip"239.5.1.4"
 bind(socket, local_address, port) || throw("Failed to open port $(port)")
@@ -55,7 +58,7 @@ route("/json") do
     DBInterface.execute(db, "SELECT * FROM Logs") |> DataFrame |> json
 end
 
-up(8888, "0.0.0.0")
+up(8888, "0.0.0.0") # we need Genie to bind to all interfaces.
 atexit(down)
 
 # Read messages as they come in and commit them to the database.
