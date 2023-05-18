@@ -11,7 +11,7 @@ using Genie
 # otherwise it will default to all interfaces.
 local_address = isempty(ARGS) ? ip"0.0.0.0" : IPv4(first(ARGS))
 
-println("Starting log collector...")
+println("Starting log collector on $(local_address)...")
 atexit(() -> println("Log collector fully shutdown."))
 
 # Open the SQLite database that we will use to store Syslog messages.
